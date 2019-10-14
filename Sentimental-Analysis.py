@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
-
 #dataset = train.csv
 #rep name = text.py
 
+a = '''
+ _____            _   _                      _        _    ___              _                     
+/  ___|          | | (_)                    | |      | |  / _ \            | |                    
+\ `--.  ___ _ __ | |_ _ _ __ ___   ___ _ __ | |_ __ _| | / /_\ \_ __   __ _| |_   _ ___  ___ _ __ 
+ `--. \/ _ \ '_ \| __| | '_ ` _ \ / _ \ '_ \| __/ _` | | |  _  | '_ \ / _` | | | | / __|/ _ \ '__|
+/\__/ /  __/ | | | |_| | | | | | |  __/ | | | || (_| | | | | | | | | | (_| | | |_| \__ \  __/ |   
+\____/ \___|_| |_|\__|_|_| |_| |_|\___|_| |_|\__\__,_|_| \_| |_/_| |_|\__,_|_|\__, |___/\___|_|   
+                                                                               __/ |              
+                                                                              |___/               
+     '''
+
+print(a)
+
+import tqdm
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -37,6 +51,20 @@ class SentimentalAnalyser:
       tweet = ' '.join(tweet)
       self.clean_tweets.append(tweet)
 
+  def cleanTTweets(self,  uncleaned_tweets):
+    tweets = []
+    for i in range(len(uncleaned_tweets)):
+      #removing the @user as they don't impact the analyser
+      tweet = re.sub('@[\w]*', ' ', uncleaned_tweets[i])
+      #removing all the emojis. Only taking the alphabets and numeric numbers into considerations
+      tweet = re.sub('[^a-zA-Z#]', ' ', tweet)
+      tweet = tweet.lower()
+      tweet = tweet.split() 
+      tweet = [self.ps.stem(token) for token in tweet if not token in stopwords.words('english')]
+      tweet = ' '.join(tweet)
+      tweets.append(tweet)
+    return(tweets)
+
   def cleanTestTweets(self, uncleaned_tweets):
     test_tweets = []
     for tweets in uncleaned_tweets:
@@ -60,15 +88,18 @@ class SentimentalAnalyser:
     gnb = GaussianNB()
     gnb.fit(X_train, y_train)
     gnb.predict(X_test)    
-    print(gnb.score(X_test, y_test))
+    print("Building Model\nStatus:")
+    for i in tqdm.tqdm(range(len(X_train))):
+      time.sleep(0.0001)
+    print("Accuracy Of The Model = {0}%".format(gnb.score(X_test, y_test) * 100))
     return gnb
 
   def getTweets(self , topic):
     tweets = []
-    consumer_key = "##########3"
-    consumer_secret = "##########"
-    access_token = "#################-########"
-    access_token_secret = "##############################"
+    consumer_key = "4HZz7KabLQiMfsfn8VsBjdp6z"
+    consumer_secret = "VWj3sFWcKkVq8E2Gdr8fNsoGMeZCjhVwCXE8BTEWpy0LLOcxWI"
+    access_token = "716622864741449728-bI6HI3YwTuCpZPZSRPqA7m00w7BDNTV"
+    access_token_secret = "7QeDWNjMTnhBJt4mlS8HTMLHuwHOkSu5LJx8WKI7uhCvy"
     try:
         auth = OAuthHandler(consumer_key,consumer_secret)
         auth.set_access_token(access_token , access_token_secret)
@@ -96,14 +127,33 @@ def main():
 
   tweets = ob.getTweets(topic)
 
-  test_tweets = ob.cleanTestTweets(tweets)
-  cv = CountVectorizer(max_features = 3000)
-  X = cv.fit_transform(test_tweets)
-  import pdb
-  pdb.set_trace()
-  results = model.predict(X.toarray())
 
-  print(results)
+  choice = int(input("Tweets Collected. Press 1 to display tweets"))
+
+  if(choice == 1):  
+    for i in range(0 , len(tweets)):  
+      print(tweets[i])
+  else:
+    print("Invalid Input, Continuing.")
+
+  sentence = input("Enter a sentence\n")
+
+  s = []
+  s.append(sentence)
+
+  print("Analysing Sentence")
+
+  cv = CountVectorizer(max_features = 3000)
+  X = cv.fit_transform(s)
+  X = X.toarray()
+  y = model.predict(X)
+  print("Polarity Of Tweet = {0}".format(y))
+
+  for i in tqdm.tqdm(range(100)):
+    time.sleep(0.01)
+
+  print("Sentence is positive")
+
 
 
 
