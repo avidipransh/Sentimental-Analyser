@@ -29,6 +29,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
+import random
 
 
 class SentimentalAnalyser:
@@ -36,6 +37,7 @@ class SentimentalAnalyser:
     self.ps =PorterStemmer()    
     self.dataset = pd.read_csv("train.csv")
     del self.dataset["id"]
+    self.dataset['tweet'][0]
     self.clean_tweets = []
 
   def cleanTweets(self):
@@ -47,10 +49,10 @@ class SentimentalAnalyser:
       tweet = tweet.lower()
       tweet = tweet.split()
       
-      tweet = [self.ps.stem(token) for token in tweet if not token in stopwords.words('english')]
+      tweet = [token for token in tweet if not token in stopwords.words('english')]
       tweet = ' '.join(tweet)
       self.clean_tweets.append(tweet)
-  
+
   def cleanTTweets(self,  uncleaned_tweets):
     tweets = []
     for i in range(len(uncleaned_tweets)):
@@ -60,7 +62,7 @@ class SentimentalAnalyser:
       tweet = re.sub('[^a-zA-Z#]', ' ', tweet)
       tweet = tweet.lower()
       tweet = tweet.split() 
-      tweet = [self.ps.stem(token) for token in tweet if not token in stopwords.words('english')]
+      tweet = [token for token in tweet if not token in stopwords.words('english')]
       tweet = ' '.join(tweet)
       tweets.append(tweet)
     return(tweets)
@@ -77,13 +79,13 @@ class SentimentalAnalyser:
       test_tweets.append(tweet)
     return test_tweets
 
-  def buildModel(self,tweets):
+  def buildModel(self):
     cv = CountVectorizer(max_features = 3000)
     X = cv.fit_transform(self.clean_tweets)
     X = X.toarray()
     y = self.dataset['label'].values
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.4)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
 
     gnb = GaussianNB()
     gnb.fit(X_train, y_train)
@@ -92,10 +94,7 @@ class SentimentalAnalyser:
     for i in tqdm.tqdm(range(len(X_train))):
       time.sleep(0.0001)
     print("Accuracy Of The Model = {0}%".format(gnb.score(X_test, y_test) * 100))
-
-    print(y)
-
-
+    return gnb , cv
 
   def getTweets(self , topic):
     tweets = []
@@ -124,47 +123,52 @@ def main():
   global np
   ob = SentimentalAnalyser()
   ob.cleanTweets()
+  model , cv = ob.buildModel()
 
-  topic = input("Enter topic for sentimental analysis.\n")
+  choice = input("Enter 1 to classify twitter tweets\nEnter 2 to classify normal sentences.\n")
+  tweets = []
 
-  tweets = ob.getTweets(topic)
-
-
-  choice = int(input("Tweets Collected. Press 1 to display tweets"))
-
-  if(choice == 1):  
-    for i in range(0 , len(tweets)):  
-      print(tweets[i])
-  else:
-    print("Invalid Input, Continuing.")
-
-  tweets = ob.cleanTTweets(tweets)
-
-  ob.buildModel(tweets)
-
-  sentence = input("Enter a sentence\n")
-
-  s = []
-  s.append(sentence)
-"""
-  print("Analysing Sentence")
-
-  cv = CountVectorizer(max_features = 3000)
-  X = cv.fit_transform(s)
-  X = X.toarray()
-  y = model.predict(X)
-  import pdb
-  pdb.set_trace()
-  print("Polarity Of Tweet = {0}".format(y))
-
-  for i in tqdm.tqdm(range(100)):
-    time.sleep(0.01)
-
-  print("Sentence is positive")
-
-"""
+  if(choice == "1"): 
+    topic = input("Enter topic for sentimental analysis.\n")
+    tweets = ob.getTweets(topic)
+    choice = int(input("Tweets Collected. Press 1 to display tweets"))
+    if(choice == 1):  
+        for i in range(0 , len(tweets)):  
+            print(tweets[i])
+    
+    tweets = ob.cleanTTweets(tweets)
+    X = cv.transform(tweets)
+    X = X.toarray()
+    y = model.predict(X)
+    print(y)
 
 
+    print("Analysing tweets now")
+    for i in tqdm.tqdm(range(100)):
+        time.sleep(0.01)
+   # a = random.random()
+   # print("The tweets are {0}% positive".format(a*100))
+    #print("The tweets are {0}% negative".format((1-a)*100))
+
+  if(choice == "2"):
+    sent = []
+    sentence = input("Enter the sentence\n")
+    sent.append(sentence)
+    ob.cleanTTweets(sent)
+    X = cv.transform(sent)
+    X = X.toarray()
+    a = model.predict(X)
+    print(y)
+    print("Analysing Sentence")
+    for i in tqdm.tqdm(range(100)):
+        time.sleep(0.01)
+    if(a[0] == -1):    
+        print("Sentence is negative")
+    elif(a[0] == 1):
+        print("Sentence is positive")
+    else:
+        print("Sentence is neutral")
+
+  
 if __name__ == "__main__":
   main()
-
