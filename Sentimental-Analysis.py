@@ -158,7 +158,7 @@ def main():
     X = cv.transform(sent)
     X = X.toarray()
     a = model.predict(X)
-    print(y)
+    print(a)
     print("Analysing Sentence")
     for i in tqdm.tqdm(range(100)):
         time.sleep(0.01)
